@@ -3,175 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Imagine AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg: #0a0b10;
-            --glass: rgba(22, 24, 33, 0.8);
+            --bg: #05060b;
+            --glass: rgba(15, 17, 26, 0.7);
             --accent: linear-gradient(135deg, #00d2ff 0%, #9d50bb 100%);
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.08);
+            --electric-blue: #00d2ff;
         }
 
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; }
+        * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
+        body { background: var(--bg); color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+        /* Glowing Background */
+        .glow {
+            position: fixed; width: 40vw; height: 40vw; border-radius: 50%;
+            background: radial-gradient(circle, rgba(157, 80, 187, 0.15) 0%, transparent 70%);
+            z-index: -1; filter: blur(80px);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
 
         /* Settings Sidebar */
-        .settings-sidebar {
-            position: fixed; right: -350px; top: 0; width: 320px; height: 100%;
-            background: var(--glass); backdrop-filter: blur(30px); border-left: 1px solid var(--border);
-            z-index: 100; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        .sidebar {
+            position: fixed; right: -450px; top: 0; width: 340px; height: 100%;
+            background: var(--glass); backdrop-filter: blur(40px); border-left: 1px solid var(--border);
+            z-index: 1000; padding: 30px; box-shadow: -20px 0 50px rgba(0,0,0,0.8);
         }
-        .settings-sidebar.open { right: 0; }
-        
-        .settings-btn {
-            position: fixed; top: 20px; right: 20px; z-index: 101;
+        .sidebar.open { right: 0; }
+        .settings-toggle {
+            position: fixed; top: 30px; right: 30px; z-index: 1001;
             background: var(--glass); border: 1px solid var(--border); color: white;
-            padding: 12px; border-radius: 50%; cursor: pointer; transition: 0.3s;
+            padding: 15px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(10px);
         }
 
-        .settings-sidebar h3 { margin-bottom: 20px; color: #00d2ff; }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+        /* Input Styles */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; }
         .input-group input { 
             width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-            padding: 10px; color: white; border-radius: 8px; outline: none;
+            padding: 12px; color: white; border-radius: 10px; outline: none;
         }
 
-        /* Main UI Elements */
-        .prompt-box {
+        /* Dashboard UI */
+        .prompt-container {
             display: flex; background: var(--glass); border: 1px solid var(--border);
-            padding: 8px; border-radius: 18px; margin-bottom: 30px;
+            padding: 10px; border-radius: 20px; margin-bottom: 40px; backdrop-filter: blur(20px);
         }
-        .prompt-box input { flex: 1; background: transparent; border: none; color: white; padding: 15px; outline: none; font-size: 16px; }
-        
-        .generate-btn {
-            background: var(--accent); border: none; color: white; padding: 0 30px;
-            border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s;
+        .prompt-container input { flex: 1; background: transparent; border: none; color: white; padding: 15px; font-size: 1.1rem; outline: none; }
+        .gen-btn {
+            background: var(--accent); border: none; color: white; padding: 0 40px;
+            border-radius: 15px; cursor: pointer; font-weight: 800; font-size: 1rem;
         }
+        .gen-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
-        .preview-canvas {
-            width: 100%; aspect-ratio: 16/9; background: #111; border-radius: 25px;
-            border: 1px solid var(--border); position: relative; display: flex;
-            align-items: center; justify-content: center; overflow: hidden;
+        .main-display {
+            width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 30px;
+            border: 1px solid var(--border); display: flex; align-items: center;
+            justify-content: center; overflow: hidden; position: relative;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
         }
-        #resultImg { width: 100%; height: 100%; object-fit: cover; display: none; }
+        #outputImg { width: 100%; height: 100%; object-fit: contain; display: none; }
         
-        .loader { display: none; width: 50px; height: 50px; border: 5px solid #333; border-top-color: #00d2ff; border-radius: 50%; animation: spin 1s infinite linear; }
+        /* Loader */
+        .loader { display: none; text-align: center; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--electric-blue); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 40px; }
-        .history-item img { width: 100%; border-radius: 12px; opacity: 0.8; transition: 0.3s; border: 1px solid var(--border); }
-        .history-item:hover img { opacity: 1; transform: scale(1.02); }
+        /* History */
+        .history-section { margin-top: 60px; }
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .history-card { border-radius: 15px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; position: relative; }
+        .history-card img { width: 100%; height: 100%; object-fit: cover; }
+        .history-card:hover { transform: translateY(-5px); border-color: var(--electric-blue); }
 
-        .save-settings { width: 100%; background: #00d2ff; color: black; border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .save-btn { width: 100%; background: #fff; color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+
+        /* Footer Styling */
+footer {
+    margin-top: 80px;
+    padding: 40px 20px;
+    border-top: 1px solid var(--border);
+    background: rgba(15, 17, 26, 0.4);
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.footer-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: var(--accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+    font-size: 1.5rem;
+}
+
+.footer-links a {
+    color: #444;
+    transition: 0.3s;
+}
+
+.footer-links a:hover {
+    color: var(--electric-blue);
+    transform: translateY(-3px);
+}
+
+.copyright {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 10px;
+}
+
     </style>
 </head>
 <body>
 
-<button class="settings-btn" id="toggleSettings"><i class="fa-solid fa-gear"></i></button>
+<div class="glow" style="top: -10%; left: -10%;"></div>
+<div class="glow" style="bottom: -10%; right: -10%;"></div>
 
-<div class="settings-sidebar" id="sidebar">
-    <h3><i class="fa-solid fa-sliders"></i> AI Settings</h3>
+<button class="settings-toggle" id="toggleSettings"><i class="fa-solid fa-sliders"></i></button>
+
+<div class="sidebar" id="sidebar">
+    <h2 style="margin-top: 0;"><i class="fa-solid fa-gears"></i> Settings</h2>
     <div class="input-group">
-        <label>Hugging Face API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="hf_xxxxxxxxxxxx">
+        <label>OpenRouter API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-or-v1-xxxx...">
     </div>
     <div class="input-group">
-        <label>Model ID</label>
-        <input type="text" id="modelInput" placeholder="stabilityai/stable-diffusion-xl-base-1.0">
+        <label>Image Model ID</label>
+        <input type="text" id="modelId" placeholder="openai/dall-e-3">
+        <small style="font-size: 10px; color: #666;">Try: stabilityai/stable-diffusion-xl</small>
     </div>
-    <button class="save-settings" id="saveSettings">Save Config</button>
-    <p style="font-size: 11px; color: #555; margin-top: 20px;">Settings are saved in your browser locally.</p>
+    <button class="save-btn" id="saveConfig">Save & Close</button>
 </div>
 
 <div class="container">
-    <div style="text-align: center; margin-bottom: 40px;">
-        <h1 style="background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">IMAGINE AI</h1>
+    <header style="text-align: center; margin-bottom: 50px;">
+        <h1 style="font-size: 3rem; margin: 0; letter-spacing: -2px;">IMAGINE <span style="color: var(--electric-blue);">AI</span></h1>
+        <p style="color: #666;">Generate anything you can dream of using OpenRouter</p>
+    </header>
+
+    <div class="prompt-container">
+        <input type="text" id="promptInput" placeholder="A futuristic cyberpunk city with neon lights and flying cars, 8k...">
+        <button class="gen-btn" id="generateBtn">GENERATE</button>
     </div>
 
-    <div class="prompt-box">
-        <input type="text" id="prompt" placeholder="A futuristic samurai in Neo-Tokyo, 8k resolution...">
-        <button class="generate-btn" id="genBtn">Generate</button>
+    <div class="main-display">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p>Dreaming up your image...</p>
+        </div>
+        <p id="placeholder" style="color: #444; font-size: 1.2rem;">Your masterpiece will appear here</p>
+        <img src="" id="outputImg">
     </div>
 
-    <div class="preview-canvas">
-        <div class="loader" id="loader"></div>
-        <p id="placeholder">Image will appear here</p>
-        <img src="" id="resultImg">
+    <div class="history-section">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Generation History</h3>
+        <div class="history-grid" id="history"></div>
     </div>
-
-    <div class="history-grid" id="history"></div>
 </div>
+    <footer>
+    <div class="footer-content">
+        <div class="footer-links">
+            <a href="#"><i class="fa-brands fa-github"></i></a>
+            <a href="#"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+        </div>
+        
+        <p class="footer-name">Designed & Crafted by [APNA NAAM LIKHO]</p>
+        
+        <p class="copyright">
+            &copy; 2026 Imagine AI Studio. All rights reserved.
+        </p>
+    </div>
+</footer>
+
 
 <script>
-    // Elements
     const sidebar = document.getElementById('sidebar');
-    const toggleSettings = document.getElementById('toggleSettings');
-    const saveSettings = document.getElementById('saveSettings');
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const modelInput = document.getElementById('modelInput');
-    const genBtn = document.getElementById('genBtn');
+    const toggleBtn = document.getElementById('toggleSettings');
+    const saveBtn = document.getElementById('saveConfig');
+    const genBtn = document.getElementById('generateBtn');
 
-    // Load saved settings
+    // Init Settings
     window.onload = () => {
-        apiKeyInput.value = localStorage.getItem('hf_key') || '';
-        modelInput.value = localStorage.getItem('hf_model') || 'stabilityai/stable-diffusion-xl-base-1.0';
+        document.getElementById('apiKey').value = localStorage.getItem('or_key') || '';
+        document.getElementById('modelId').value = localStorage.getItem('or_model') || 'openai/dall-e-3';
     };
 
-    toggleSettings.onclick = () => sidebar.classList.toggle('open');
-    
-    saveSettings.onclick = () => {
-        localStorage.setItem('hf_key', apiKeyInput.value);
-        localStorage.setItem('hf_model', modelInput.value);
-        alert("Configuration Saved!");
+    toggleBtn.onclick = () => sidebar.classList.toggle('open');
+    saveBtn.onclick = () => {
+        localStorage.setItem('or_key', document.getElementById('apiKey').value);
+        localStorage.setItem('or_model', document.getElementById('modelId').value);
         sidebar.classList.remove('open');
     };
 
     async function generateImage() {
-        const key = localStorage.getItem('hf_key');
-        const model = localStorage.getItem('hf_model');
-        const prompt = document.getElementById('prompt').value;
+        const key = localStorage.getItem('or_key');
+        const model = localStorage.getItem('or_model');
+        const prompt = document.getElementById('promptInput').value;
 
-        if(!key) return alert("Pehle settings mein API Key daalein!");
-        if(!prompt) return alert("Prompt likhna zaroori hai!");
+        if(!key) { alert("Please set your API Key in settings first!"); sidebar.classList.add('open'); return; }
+        if(!prompt) return alert("Enter a prompt!");
 
-        // UI Loading
+        // UI States
         document.getElementById('loader').style.display = 'block';
         document.getElementById('placeholder').style.display = 'none';
-        document.getElementById('resultImg').style.display = 'none';
+        document.getElementById('outputImg').style.display = 'none';
         genBtn.disabled = true;
 
         try {
-            const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
-                headers: { Authorization: `Bearer ${key}` },
+            const response = await fetch("https://openrouter.ai/api/v1/images/generations", {
                 method: "POST",
-                body: JSON.stringify({ inputs: prompt }),
+                headers: {
+                    "Authorization": `Bearer ${key}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "model": model,
+                    "prompt": prompt,
+                    "response_format": "url" // Or "b64_json" depending on model
+                })
             });
 
-            if(!response.ok) throw new Error("API Issue");
+            const data = await response.json();
+            const imageUrl = data.data[0].url;
 
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            
-            // Show result
-            document.getElementById('resultImg').src = url;
-            document.getElementById('resultImg').style.display = 'block';
+            // Show Results
+            const output = document.getElementById('outputImg');
+            output.src = imageUrl;
+            output.style.display = 'block';
             document.getElementById('loader').style.display = 'none';
 
-            // Add to history
-            const img = document.createElement('div');
-            img.className = 'history-item';
-            img.innerHTML = `<img src="${url}">`;
-            document.getElementById('history').prepend(img);
+            // Add to History
+            const histDiv = document.createElement('div');
+            histDiv.className = 'history-card';
+            histDiv.innerHTML = `<img src="${imageUrl}" onclick="window.open(this.src)">`;
+            document.getElementById('history').prepend(histDiv);
 
-        } catch (e) {
-            alert("Error: Check API Key or Model Name");
+        } catch (error) {
+            console.error(error);
+            alert("Error: Make sure your OpenRouter Key is valid and has credits.");
             document.getElementById('loader').style.display = 'none';
+            document.getElementById('placeholder').style.display = 'block';
         } finally {
             genBtn.disabled = false;
         }
